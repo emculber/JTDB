@@ -1,0 +1,16 @@
+{
+  "Database": {
+    "Name": "dbname",
+    "Table": {
+      "Name": "tname",
+      "Columns": [{
+        "Name": "column1",
+        "DataType": "String",
+        "Extra": ["Primary", "AutoIncriment"]
+      }, {
+        "Name": "column2",
+        "DataType": "String"
+      }]
+    }
+  }
+}
