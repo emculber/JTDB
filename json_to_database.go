@@ -1,16 +1,13 @@
 package main
 
 import (
-	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
-	"github.com/emculber/database_access/postgresql"
-	"github.com/lib/pq"
+	"../JTDB/postgresql"
 )
 
 type Configuration struct {
@@ -18,28 +15,101 @@ type Configuration struct {
 }
 
 type database struct {
-	Connection connection
 	Name       string
-	Tables     []table
+	Connection Connection
+	Users      Users
+	Tables     []Table
 }
 
-type connection struct {
-	Host     string
-	Port     int
+type Connection struct {
+	Host string
+	Port int
+}
+
+type Users struct {
+	DefaultUser User `json:"Default User"`
+	User        []User
+}
+
+type User struct {
 	Username string
 	Password string
-	Dbname   string
+	Role     string
 }
 
-type table struct {
+type Table struct {
 	Name    string
-	Columns []column
+	Columns []Column
 }
 
-type column struct {
+type Column struct {
 	Name        string
 	Datatype    string
 	Constraints []string
+}
+
+func GetDatabaseConnection(database_struct database) *sql.DB {
+	database_name := strings.Split(database_struct.Name, "{")
+	database_user := strings.Split(database_struct.Users.DefaultUser.Username, "{")
+	database_password := strings.Split(database_struct.Users.DefaultUser.Password, "{")
+
+	db := postgresql.ConnectToDatabase(
+		database_name[0],
+		database_struct.Connection.Host,
+		database_struct.Connection.Port,
+		database_user[0],
+		database_password[0],
+	)
+	return db
+}
+
+func JsonToDatabse() {
+	configuration := testJson()
+
+	for _, database_struct := range configuration.Database {
+		db := GetDatabaseConnection(database_struct)
+
+		exist, _ := postgresql.CheckIfDatabaseExists(db, database_struct.Name)
+
+		if !exist {
+			fmt.Println(exist)
+			postgresql.CreateDatabase(db, database_struct.Name)
+		}
+	}
+
+	return
+	/*
+		for _, database_struct := range configuration.Database {
+			//TODO: Check if DB exists   psql -lqt | cut -d \| -f 1 | grep -qw <dbname>
+			postgresql.CreateDatabase(database_struct.Name)
+			//TODO: Connect to database
+			database_struct.Connection.Dbname = database_struct.Name
+			db := postgresql.ConnectToDatabase(database_struct.Connection)
+			//fmt.Println(db)
+			for _, table_struct := range database_struct.Tables {
+				//TODO: Check if tables exist
+				statement := "Select * from " + table_struct.Name
+				err := postgresql_access.CreateDatabaseTable(db, statement)
+				if err != nil {
+					if err, ok := err.(*pq.Error); ok {
+						//fmt.Println(err.Code)
+						if err.Code == "42P01" {
+							//fmt.Println(err.Code)
+							//TODO: if Table does not exist create Table
+							statement := postgresql.CreateTableSQL(table_struct)
+							fmt.Println(statement)
+							err := postgresql_access.CreateDatabaseTable(db, statement)
+							fmt.Println(err)
+						}
+					}
+				}
+			}
+		}
+	*/
+}
+
+func main() {
+	JsonToDatabse()
 }
 
 func testJson() Configuration {
@@ -62,76 +132,4 @@ func testJson() Configuration {
 	}
 	//fmt.Println(configuration)
 	return configuration
-}
-
-func ConnectToDatabase(connection connection) *sql.DB {
-	db_url := fmt.Sprintf("postgres://%s:%s@%s/%s", connection.Username, connection.Password, connection.Host, connection.Dbname)
-	db, err := sql.Open("postgres", db_url)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return db
-}
-
-func CreateDatabase(database_name string) {
-	cmd := exec.Command("createdb", database_name)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		fmt.Println(err)
-	}
-	//fmt.Printf(out.String())
-}
-
-func CreateTableSQL(table_struct table) string {
-	create_table := "CREATE TABLE " + table_struct.Name + " ("
-	for i, column_struct := range table_struct.Columns {
-		//fmt.Println(column_struct)
-		//TODO: if columns dont exits create column
-		create_table += column_struct.Name + " " + strings.ToLower(column_struct.Datatype)
-		for _, constrant := range column_struct.Constraints {
-			create_table += " " + strings.ToLower(constrant)
-		}
-		if i != len(table_struct.Columns)-1 {
-			create_table += ", "
-		}
-	}
-	create_table += ");"
-	return create_table
-}
-
-func JsonToDatabse() {
-	configuration := testJson()
-
-	for _, database_struct := range configuration.Database {
-		//TODO: Check if DB exists   psql -lqt | cut -d \| -f 1 | grep -qw <dbname>
-		CreateDatabase(database_struct.Name)
-		//TODO: Connect to database
-		database_struct.Connection.Dbname = database_struct.Name
-		db := ConnectToDatabase(database_struct.Connection)
-		//fmt.Println(db)
-		for _, table_struct := range database_struct.Tables {
-			//TODO: Check if tables exist
-			statement := "Select * from " + table_struct.Name
-			err := postgresql_access.CreateDatabaseTable(db, statement)
-			if err != nil {
-				if err, ok := err.(*pq.Error); ok {
-					//fmt.Println(err.Code)
-					if err.Code == "42P01" {
-						//fmt.Println(err.Code)
-						//TODO: if Table does not exist create Table
-						statement := CreateTableSQL(table_struct)
-						fmt.Println(statement)
-						err := postgresql_access.CreateDatabaseTable(db, statement)
-						fmt.Println(err)
-					}
-				}
-			}
-		}
-	}
-}
-
-func main() {
-	JsonToDatabse()
 }
