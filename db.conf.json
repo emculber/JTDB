@@ -1,5 +1,6 @@
 {
   "Database": [{
+    "Default": "postgres",
     "Name": "test",
     "Connection" : {
       "host" : "localhost",
@@ -8,9 +9,10 @@
     "Users" : {
       "Default User" : {
         "Username": "postgres{Remove}",
-        "Password": "password", "Role": "Superuser, Create role, Create DB, Replication"
+        "Password": "password", 
+        "Role": "Superuser, Create role, Create DB, Replication"
       },
-      "UserTEST" : [{
+      "User" : [{
         "Username": "test{Default}",
         "Password": "",
         "Role": "Superuser, Create role, Create DB, Replication"
