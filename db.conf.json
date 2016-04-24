@@ -15,7 +15,7 @@
       "User" : [{
         "Username": "test{Default}",
         "Password": "",
-        "Role": "Superuser, Create role, Create DB, Replication"
+        "Role": "Superuser, Create role, Create DB, Replication, Login"
       }]
     },
     "Tables": [{

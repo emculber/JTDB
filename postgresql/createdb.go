@@ -59,8 +59,8 @@ func CheckIfRoleExists(db *sql.DB, user_name string) (bool, error) {
 	return false, nil
 }
 
-func CreateUser(db *sql.DB, user_name, user_roles string) {
-	statement := fmt.Sprintf("CREATE ROLE %s WITH %s", user_name, user_roles)
+func CreateUser(db *sql.DB, user_name, user_password, user_roles string) {
+	statement := fmt.Sprintf("CREATE ROLE %s WITH PASSWORD '%s' %s", user_name, user_password, user_roles)
 	fmt.Println("Creating database:", statement)
 	_, err := db.Exec(statement)
 	if err != nil {
@@ -71,20 +71,15 @@ func CreateUser(db *sql.DB, user_name, user_roles string) {
 	fmt.Println("Successfully created user")
 }
 
-/*
-func CreateTableSQL(table_struct Table) string {
-	create_table := "CREATE TABLE " + table_struct.Name + " ("
-	for i, column_struct := range table_struct.Columns {
-		//fmt.Println(column_struct)
-		//TODO: if columns dont exits create column
-		create_table += column_struct.Name + " " + strings.ToLower(column_struct.Datatype)
-		for _, constrant := range column_struct.Constraints {
-			create_table += " " + strings.ToLower(constrant)
-		}
-		if i != len(table_struct.Columns)-1 {
-			create_table += ", "
-		}
+func CheckIfTableExists(db *sql.DB, table_name string) (bool, error) {
+	statement := fmt.Sprintf("select count(*) from pg_tables where tablename='%s'", table_name)
+	fmt.Println("Checking if table exists with the statement:", statement)
+	count, _, _ := postgresql_access.QueryDatabase(db, statement)
+	fmt.Println("database statement count returned:", count)
+	if count[0][0] == 1 {
+		fmt.Println("table exists")
+		return true, nil
 	}
-	create_table += ");"
-	return create_table
-}*/
+	fmt.Println("table does not exists")
+	return false, nil
+}
