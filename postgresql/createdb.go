@@ -3,6 +3,7 @@ package postgresql
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/emculber/database_access/postgresql"
 )
@@ -25,7 +26,7 @@ func CheckIfDatabaseExists(db *sql.DB, database_name string) (bool, error) {
 	fmt.Println("Checking if database exists with the statement:", statement)
 	count, _, _ := postgresql_access.QueryDatabase(db, statement)
 	fmt.Println("database statement count returned:", count)
-	if count[0][0] == 1 {
+	if count[0][0] == "1" {
 		fmt.Println("Database exists")
 		return true, nil
 	}
@@ -51,7 +52,7 @@ func CheckIfRoleExists(db *sql.DB, user_name string) (bool, error) {
 	fmt.Println("Checking if user exists with the statement:", statement)
 	count, _, _ := postgresql_access.QueryDatabase(db, statement)
 	fmt.Println("database statement count returned:", count)
-	if count[0][0] == 1 {
+	if count[0][0] == "1" {
 		fmt.Println("User exists")
 		return true, nil
 	}
@@ -72,11 +73,11 @@ func CreateUser(db *sql.DB, user_name, user_password, user_roles string) {
 }
 
 func CheckIfTableExists(db *sql.DB, table_name string) (bool, error) {
-	statement := fmt.Sprintf("select count(*) from pg_tables where tablename='%s'", table_name)
+	statement := fmt.Sprintf("select count(*) from pg_tables where tablename='%s'", strings.ToLower(table_name))
 	fmt.Println("Checking if table exists with the statement:", statement)
 	count, _, _ := postgresql_access.QueryDatabase(db, statement)
-	fmt.Println("database statement count returned:", count)
-	if count[0][0] == 1 {
+	fmt.Println("database statement count returned:", count[0][0])
+	if count[0][0] == "1" {
 		fmt.Println("table exists")
 		return true, nil
 	}

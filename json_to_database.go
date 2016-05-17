@@ -98,6 +98,7 @@ func JsonToDatabse(configuration Configuration) Configuration {
 	for i, database_struct := range configuration.Database {
 		fmt.Println("Getting database connection")
 		var db *sql.DB
+		fmt.Println("Checking if Default Database is set:", database_struct.Default)
 		if database_struct.Default != "" {
 			db = GetDatabaseConnection(database_struct.Default, database_struct.Users.DefaultUser, database_struct.Connection)
 		} else {
@@ -137,12 +138,12 @@ func JsonToDatabse(configuration Configuration) Configuration {
 			}
 		}
 
-		fmt.Println("Closing database connection for new connection")
-		db.Close()
-		fmt.Println("Openning new connection")
-		db = GetDatabaseConnection(configuration.Database[i].Default, configuration.Database[i].Users.DefaultUser, configuration.Database[i].Connection)
-
 		if database_struct.Default != "" {
+			fmt.Println("Closing database connection for new connection")
+			db.Close()
+			fmt.Println("Openning new connection")
+			db = GetDatabaseConnection(configuration.Database[i].Default, configuration.Database[i].Users.DefaultUser, configuration.Database[i].Connection)
+
 			fmt.Println("Checking if Database:", database_struct.Name, "Exists")
 			exist, _ := postgresql.CheckIfDatabaseExists(db, database_struct.Name)
 
@@ -150,8 +151,11 @@ func JsonToDatabse(configuration Configuration) Configuration {
 				fmt.Println("Database does not exits, Creating database")
 				postgresql.CreateDatabase(db, database_struct.Name)
 			}
-			db = GetDatabaseConnection(configuration.Database[i].Name, configuration.Database[i].Users.DefaultUser, configuration.Database[i].Connection)
 		}
+		fmt.Println("Closing database connection for new connection")
+		db.Close()
+		fmt.Println("Openning new connection")
+		db = GetDatabaseConnection(configuration.Database[i].Name, configuration.Database[i].Users.DefaultUser, configuration.Database[i].Connection)
 		fmt.Println("Checking and creating tables")
 		for _, table_struct := range database_struct.Tables {
 			table_exist, _ := postgresql.CheckIfTableExists(db, table_struct.Name)
@@ -171,15 +175,17 @@ func JsonToDatabse(configuration Configuration) Configuration {
 }
 
 func main() {
+
+	path := "/home/erik/programming/golang/src/Scheduler"
+
 	fmt.Println("Running Json to Database")
 
 	fmt.Println("Loading Json Configuration")
-	configuration := testJson()
-	new_configuration := JsonToDatabse(testJson())
+	configuration := testJson(path)
+	new_configuration := JsonToDatabse(testJson(path))
 
 	if !reflect.DeepEqual(configuration, new_configuration) {
 		fmt.Println("Configurations are not equal")
-		path, _ := os.Getwd()
 		err := os.Mkdir(path+"/PastConfig", 0711)
 		if err != nil {
 			fmt.Println(err)
@@ -217,8 +223,7 @@ func main() {
 	}
 }
 
-func testJson() Configuration {
-	path, _ := os.Getwd()
+func testJson(path string) Configuration {
 	fmt.Println("Loading test Json Configuration at path: ", path)
 
 	config_file, err := os.Open(path + "/db.conf.json")

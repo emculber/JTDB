@@ -1,0 +1,44 @@
+{
+  "Database": [{
+    "Default": "postgres",
+    "Name": "test",
+    "Connection" : {
+      "host" : "localhost",
+      "port" : 5432
+    },
+    "Users" : {
+      "Default User" : {
+        "Username": "postgres{Remove}",
+        "Password": "password", 
+        "Role": "Superuser, Create role, Create DB, Replication"
+      },
+      "User" : [{
+        "Username": "test{Default}",
+        "Password": "",
+        "Role": "Superuser, Create role, Create DB, Replication, Login"
+      }]
+    },
+    "Tables": [{
+      "Name": "Table1",
+      "Columns": [{
+        "Name": "id",
+        "DataType": "Serial",
+        "Constraints": ["Primary key"]
+      }, {
+        "Name": "Name",
+        "DataType": "Varchar"
+      }]
+    },
+    { 
+      "Name": "Table2",
+      "Columns": [{
+        "Name": "id",
+        "DataType": "Serial",
+        "Constraints": ["Primary key"]
+      }, {
+        "Name": "Name",
+        "DataType": "Varchar"
+      }]
+    }]
+  }]
+}
